@@ -1,0 +1,61 @@
+1. Why is MVVM important? Which files represent Model, View, and ViewModel?
+MVVM (Model-View-ViewModel) sangat penting karena menerapkan prinsip Separation of Concerns (Pemisahan Tanggung Jawab).
+Decoupling: Memisahkan logika bisnis (ViewModel) dari antarmuka pengguna/UI (View). Ini membuat kode lebih rapi dan mudah dibaca.
+Testability: Karena ViewModel tidak bergantung langsung pada Android Context atau UI, logika bisnis menjadi jauh lebih mudah untuk diuji (Unit Testing).
+Lifecycle Awareness: ViewModel dapat mempertahankan data saat terjadi perubahan konfigurasi (seperti rotasi layar), sehingga mencegah pengambilan data ulang yang tidak perlu.
+
+File Representasi di Proyek Anda:
+Model (Data & Logic):
+Movie.kt (Struktur data)
+MovieDao.kt, MovieDatabase.kt (Sumber data lokal/Room)
+MovieService.kt (Sumber data remote/API)
+
+View (UI):
+MainActivity.kt
+activity_main.xml
+RecyclerViewBinding.kt (Binding Adapter)
+MovieAdapter.kt
+ViewModel (Penghubung):
+MovieViewModel.kt
+
+2. In Part 1, you implemented Data Binding, why is this more efficient than using the normal method?
+Data Binding lebih efisien dibandingkan metode normal (findViewById) karena:
+Mengurangi Boilerplate Code: Anda tidak perlu lagi menulis findViewById berulang kali untuk setiap komponen UI.
+
+- Pembaruan UI Otomatis: Dengan mengikat (binding) data langsung di XML (seperti app:list="@{viewModel.popularMovies}"), UI akan otomatis diperbarui setiap kali data di ViewModel berubah (menggunakan StateFlow atau LiveData).
+
+- Keamanan Null (Null Safety): Binding dibuat saat compile time, sehingga mengurangi risiko NullPointerException yang sering terjadi jika ID view salah ketik atau tidak ditemukan.
+
+- Performa: Binding object hanya melakukan pencarian view sekali saat inisialisasi, sedangkan findViewById melakukan traversal hierarki view setiap kali dipanggil.
+
+3. In Part 2, you implemented the Singleton Pattern, why is this important?
+Singleton Pattern pada MovieDatabase penting karena:
+- Mahal (Expensive): Membuka koneksi ke database SQLite/Room adalah operasi yang sangat memakan memori dan waktu CPU (expensive operation).
+- Konsistensi Data: Memastikan hanya ada satu instance database yang terbuka di seluruh aplikasi.
+- Mencegah Race Conditions: Jika ada banyak instance database yang mencoba menulis ke file database yang sama secara bersamaan, bisa terjadi kerusakan data atau error karena file sedang dikunci (locked).
+- Efisiensi Memori: Mencegah kebocoran memori (memory leak) akibat pembuatan objek database berulang kali.
+
+4. In Part 2 & 3, you implemented the Repository Pattern, why is this important?
+Repository Pattern penting karena bertindak sebagai Single Source of Truth (Satu-satunya sumber kebenaran data).
+- Abstraksi: ViewModel tidak perlu tahu dari mana data berasal (apakah dari API atau dari Database Lokal). ViewModel hanya meminta data ke Repository.
+- Logika Caching (Offline First): Repository menangani logika: "Cek database dulu, jika ada tampilkan. Jika kosong, ambil dari API lalu simpan ke database." Tanpa Repository, logika rumit ini akan menumpuk di ViewModel atau Activity.
+- Pemisahan: Jika suatu hari Anda mengganti API atau Database, Anda hanya perlu mengubah kode di Repository tanpa mengganggu UI atau ViewModel.
+
+5. In Part 3, you implemented the Worker Manager, is there another way to refresh your database with the latest data other than using Worker?
+Ya, ada beberapa cara lain, meskipun WorkManager adalah yang paling direkomendasikan untuk tugas terjadwal yang guaranteed (pasti jalan). Alternatifnya:
+
+Swipe to Refresh (SwipeRefreshLayout):
+Cara kerja: User menarik layar ke bawah untuk memicu refresh.
+Kelebihan: Memberikan kontrol penuh kepada user.
+Kekurangan: Data tidak update otomatis jika user tidak membuka aplikasi.
+Lifecycle-Based Refresh (onResume):
+Cara kerja: Memanggil fungsi fetch API setiap kali pengguna membuka kembali aplikasi atau Activity.
+Kelebihan: Data selalu baru saat aplikasi dibuka.
+Kekurangan: Membuat aplikasi lambat saat dibuka jika koneksi buruk, dan boros kuota jika user sering bolak-balik aplikasi.
+
+AlarmManager (Cara Lama):
+Cara kerja: Menjadwalkan alarm sistem untuk menjalankan service.
+Kekurangan: Tidak efisien baterai dan sering dimatikan oleh fitur penghemat baterai di Android versi baru (Doze Mode). WorkManager sebenarnya membungkus AlarmManager (untuk OS lama) dan JobScheduler (untuk OS baru) menjadi satu API yang lebih cerdas.
+Foreground Service:
+Cara kerja: Menjalankan service dengan notifikasi yang tidak bisa dihilangkan.
+Kekurangan: Terlalu berlebihan (overkill) hanya untuk update data film dan mengganggu user.
