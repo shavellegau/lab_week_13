@@ -8,6 +8,7 @@ pluginManagement {
             }
         }
         mavenCentral()
+        jcenter()
         gradlePluginPortal()
     }
 }
@@ -16,9 +17,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        jcenter()
     }
 }
 
-rootProject.name = "TEST_lab_week_13"
+rootProject.name = "lab_week_13"
 include(":app")
- 
